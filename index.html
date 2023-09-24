@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landscape Canvas</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E %3Crect x='0' y='0' width='50' height='50' fill='%23000' /%3E %3Crect x='50' y='0' width='50' height='50' fill='%23fff' /%3E %3Crect x='0' y='50' width='50' height='50' fill='%23fff' /%3E %3Crect x='50' y='50' width='50' height='50' fill='%23000' opacity='0.2' /%3E %3C/svg%3E");
+            background-size: 100px 100px;
+            color: #ff0000;
+        }
+
+        .image-container {
+            display: flex;
+            flex-wrap: wrap;
+            max-width: 100%;
+        }
+
+        .image-container img {
+            max-width: 25%;
+            height: auto;
+            display: none;
+        }
+
+        .image-selector {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .image-selector input[type="file"] {
+            display: none;
+        }
+
+        .image-selector label {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+
+        .seamless-info {
+            text-align: center;
+            padding: 10px;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="image-selector">
+        <label for="image">Choose an image (PNG or JPG)</label>
+        <input type="file" id="image" accept="image/png, image/jpeg" onchange="loadImages()">
+    </div>
+
+    <div class="image-container" id="image-container">
+        <!-- Top 8 images -->
+        <img src="placeholder.png" alt="Tile Image 1">
+        <img src="placeholder.png" alt="Tile Image 2">
+        <img src "placeholder.png" alt "Tile Image 3">
+        <img src "placeholder.png" alt "Tile Image 4">
+        <img src "placeholder.png" alt "Tile Image 5">
+        <img src "placeholder.png" alt "Tile Image 6">
+        <img src "placeholder.png" alt "Tile Image 7">
+        <img src "placeholder.png" alt "Tile Image 8">
+
+        <!-- Bottom 8 images -->
+        <img src "placeholder.png" alt "Tile Image 9">
+        <img src "placeholder.png" alt "Tile Image 10">
+        <img src "placeholder.png" alt "Tile Image 11">
+        <img src "placeholder.png" alt "Tile Image 12">
+        <img src "placeholder.png" alt "Tile Image 13">
+        <img src "placeholder.png" alt "Tile Image 14">
+        <img src "placeholder.png" alt "Tile Image 15">
+        <img src "placeholder.png" alt "Tile Image 16">
+    </div>
+
+    <div class="seamless-info" id="seamless-info">
+        Seamlessness: 0%
+    </div>
+
+    <script>
+        function loadImages() {
+            const imageInput = document.getElementById('image');
+            const imageContainer = document.getElementById('image-container');
+            const seamlessInfo = document.getElementById('seamless-info');
+            const file = imageInput.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageUrl = e.target.result;
+                    imageContainer.style.display = "flex";
+                    const images = imageContainer.querySelectorAll('img');
+                    images.forEach(img => {
+                        img.src = imageUrl;
+                        img.style.display = "block";
+                    });
+
+                    const seamlessPercentage = calculateSeamlessPercentage(imageContainer);
+                    seamlessInfo.textContent = `Seamlessness: ${seamlessPercentage.toFixed(2)}%`;
+                };
+
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function calculateSeamlessPercentage(container) {
+            const images = container.querySelectorAll('img');
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            const width = images[0].naturalWidth;
+            const height = images[0].naturalHeight;
+            canvas.width = width * 4;
+            canvas.height = height * 2;
+
+            let nonMatchingPixels = 0;
+            let totalPixels = 0;
+
+            for (let i = 0; i < images.length; i++) {
+                const img = images[i];
+                const x = i % 4;
+                const y = i < 8 ? 0 : 1;
+
+                context.drawImage(img, x * width, y * height, width, height);
+
+                if (i > 0) {
+                    nonMatchingPixels += compareImages(canvas, x, y, width, height);
+                }
+
+                totalPixels += width * height;
+            }
+
+            const seamlessPercentage = ((totalPixels - nonMatchingPixels) / totalPixels) * 100;
+            return seamlessPercentage;
+        }
+
+        function compareImages(canvas, x, y, width, height) {
+            const imgData1 = canvas.getContext('2d').getImageData(x * width, y * height, width, height).data;
+            const imgData2 = canvas.getContext('2d').getImageData((x - 1) * width, y * height, width, height).data;
+
+            let nonMatchingPixels = 0;
+
+            for (let i = 0; i < imgData1.length; i++) {
+                if (imgData1[i] !== imgData2[i]) {
+                    nonMatchingPixels++;
+                }
+            }
+
+            return nonMatchingPixels;
+        }
+    </script>
+</body>
+</html>
